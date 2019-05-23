@@ -10,11 +10,11 @@ global with sharing class AMIND_OperationLogUtil {
     public Datetime Stop { get; set; }
     public Datetime ExecuteDate { get; set; }
     public String Status { get; set; }
-    public String Scope { get; set; }
     public Integer ItemsProcessed { get; set; }
     public Integer FailureCount { get; set; }
     public String Result { get; set; }
     public String Notes { get; set; }
+    public ID parentLog { get; set; }
     
     public Log(String name, String jobType) {
         Datetime now = Datetime.now();
@@ -43,7 +43,8 @@ global with sharing class AMIND_OperationLogUtil {
             AMIND_Failure_Count__c = this.FailureCount,
             AMIND_Result__c = this.Result,
             AMIND_Status__c = this.Status,
-            AMIND_Notes__c = this.Notes
+            AMIND_Notes__c = this.Notes,
+            AMIND_Parent_Opearation_Log__c = this.parentLog
         );
     }
 
