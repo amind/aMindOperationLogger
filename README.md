@@ -105,6 +105,64 @@ trigger testOperationLog on AMIND_Operation_log__c (after update) {
 }
 ```
 ## Log Hierarchy
+Avoid use of hierarchy logs frequently, it consume DML operations;
 ```javascript
-//TODO: example of log hierarchy
+global class TestOperationLogBatch implements Database.Batchable<sObject>, Database.stateful {
+
+    //The class must implement Database.statful in order to share variable between transactions
+
+    //Initialize Log object to track events
+    private AMIND_OperationLogUtil.Log opLog = 
+      new AMIND_OperationLogUtil.Log('TestOperationLogBatch', 'BatchApex');
+
+    global Database.QueryLocator start(Database.BatchableContext BC){
+
+      //Set execution date and save log in DB
+      this.opLog.ExecuteDate = Datetime.now();
+      this.opLog.id = AMIND_OperationLogUtil.addLog(this.opLog);
+      return Database.getQueryLocator('SELECT Id FROM Account');
+    }
+    
+    global void execute(Database.BatchableContext BC, List<Account> scope){
+      //append Notes, you can use this function when you want to save event in the log
+      this.opLog.appendNotes('Transaction');
+
+      AMIND_OperationLogUtil.Log childOpLog = 
+        new AMIND_OperationLogUtil.Log('TestOperationLogBatch-child', 'BatchApex');
+      childOpLog.Start = Datetime.now();
+      childOpLog.ExecuteDate = Datetime.now();
+
+      //assign parent log
+      childOpLog.parentLog = this.opLog.Id;
+      childOpLog.id = AMIND_OperationLogUtil.addLog(childOpLog);
+
+      try {
+
+        for(Account account : scope) {
+          //append Notes, you can use this function when you want to save event in the log
+          childOpLog.appendNotes(AMIND_OperationLogUtil.getURL(account.Id));
+
+          //Count successfully processed items
+          childOpLog.ItemsProcessed++;
+          this.opLog.ItemsProcessed++;
+        }
+        childOpLog.Result = 'SUCCESS';
+        childOpLog.Stop = Datetime.now();
+        AMIND_OperationLogUtil.updateLog(childOpLog);
+        
+      } catch (Exception ex) {
+        //Count failed items
+        childOpLog.FailureCount++;
+        this.opLog.FailureCount++;
+        //Save log with latest updates
+        AMIND_OperationLogUtil.finishLog(childOpLog, 'ERROR', 'ERROR:'+ex.getMessage());
+      }
+
+    }
+    
+    global void finish(Database.BatchableContext BC){
+      String result = (this.opLog.FailureCount == 0) ?  'SUCCESS': 'ERROR';
+      AMIND_OperationLogUtil.finishLog(this.opLog, result, 'Finished Successfully');
+    }
+}
 ```
