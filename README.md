@@ -104,3 +104,7 @@ trigger testOperationLog on AMIND_Operation_log__c (after update) {
     }
 }
 ```
+## Log Hierarchy
+```javascript
+//TODO: example of log hierarchy
+```
