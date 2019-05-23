@@ -29,6 +29,8 @@ global class TestOperationLogBatch implements Database.Batchable<sObject>, Datab
         for(Account account : scope) {
           //append Notes, you can use this function when you want to save event in the log
           this.opLog.appendNotes(AMIND_OperationLogUtil.getURL(account.Id) +' test');
+          //Divide by zero is not allowed so this will throw exception which will gonna be
+          //saved in Operation Log object and FailureCount will be increased
           Integer test = 1/0;
           //Count successfully processed items
           this.opLog.ItemsProcessed++;
