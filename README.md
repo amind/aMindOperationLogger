@@ -95,3 +95,12 @@ global class TestOperationLogBatch implements Database.Batchable<sObject>, Datab
     }
 }
 ```
+## Trigger on Error or Success
+```javascript
+trigger testOperationLog on AMIND_Operation_log__c (after update) {
+    AMIND_Operation_Log opLog = trigger.new[0];
+    if(opLog.AMIND_Result__c == 'ERROR') { //OR 'SUCCESS'
+        //do something
+    }
+}
+```
