@@ -1,3 +1,51 @@
+test
+```javascript
+// RLW 21 May 2019
+// Created for proving out the Accounting Seed API for posting JE records sourced from billing
+// Database.executeBatch((new aMindCPQBill_AS_IntegratedJEPoster()), 2);
+// TODO - add error handling and logging code when object and utility class is ready for it
+// TODO - add test coverage
+
+global class aMindCPQBill_AS_IntegratedJEPoster implements Database.Batchable<sObject>, Database.stateful {
+    
+    // Initialize Log object to track events
+    private AMIND_OperationLogUtil.Log opLog = 
+      new AMIND_OperationLogUtil.Log('IntegratedJEPoster' + Datetime.now(), 'BatchApex');
+   
+    global Database.QueryLocator  start (Database.BatchableContext bc) {
+        // Set execution date and save log in DB
+        opLog.ExecuteDate = Datetime.now();
+        opLog.id = AMIND_OperationLogUtil.addLog(opLog);
+        
+        // get all the JE records where they're approved but not yet posted and sourced from billing
+        return (Database.getQueryLocator('SELECT Id, Name FROM AcctSeed__Journal_Entry__c WHERE AcctSeed__Status__c = \'Approved\' AND aMindCPQBill_Sourced_from_SF_Billing__c = true'));
+    }
+    global void execute (Database.BatchableContext bc, List<AcctSeed__Journal_Entry__c> records){
+        try {
+        
+            opLog.appendNotes('Number of Journal Entries:' + records.size());
+            // process each batch of records
+            AcctSeed.PostResult[] postResults = AcctSeed.JournalEntryPostService.postJournalEntries(records);
+            opLog.ItemsProcessed++;
+            // TODO - do something intelligent with the results
+        } catch (Exception ex) {
+            // Count failed items
+            opLog.FailureCount++;
+            //Save log with latest updates
+            AMIND_OperationLogUtil.finishLog(opLog, 'ERROR', 'ERROR:'+ex.getMessage());
+        }
+
+    }    
+    global void finish (Database.BatchableContext bc){
+        // execute any post-processing operations
+        // nothing to do here
+        
+        String result = (this.opLog.FailureCount == 0) ?  'SUCCESS': 'ERROR';
+        AMIND_OperationLogUtil.finishLog(this.opLog, result, 'Finished Successfully');
+    }    
+
+}
+```
 # aMind Operation Logger
 This Utility exposes fields and methods that can be utilized by other Apex Classes to create Persistent Logs of type Error or Information as opposed to native Debug Logs. 
 
