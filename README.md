@@ -2,7 +2,14 @@
 This Utility exposes fields and methods that can be utilized by other Apex Classes to create Persistent Logs of type Error or Information as opposed to native Debug Logs. 
 
 # link for unmanaged package
+
+## Developer Edition
 https://login.salesforce.com/packaging/installPackage.apexp?p0=04t1v000002KQ3Z
+
+## Sandbox
+https://test.salesforce.com/packaging/installPackage.apexp?p0=04t1v000002KQ3Z
+
+For Production recomendation is to use change sets instead of unmanaged package
 
 # Examples
 ## Error case. Divide by 0
